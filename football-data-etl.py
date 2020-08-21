@@ -11,7 +11,6 @@ import mysql.connector
 #######################################################
 
 def scrape_data():
-
     # Use the request library to scrape data from the specified link
     web_data = requests.get('https://www.football-data.co.uk/englandm.php')
 
@@ -25,6 +24,7 @@ def scrape_data():
     - https://www.football-data.co.uk/mmz4281/1920/E0.csv
     - https://www.football-data.co.uk/mmz4281/1920/E2.csv
     - https://www.football-data.co.uk/mmz4281/0203/E1.csv
+
     """
     # A list to aggregate the matched/desired csv links
     csv_links = []
@@ -46,10 +46,11 @@ def extract_transform_to_csv():
     scraped_data = scrape_data() # Create an object to recieve scrapped data
     datafiles = []
     data_columns = ['Div','Date','HomeTeam','AwayTeam','FTHG','FTAG'] #This is a list of the specific columns of data required
+    # Iterate through scrapped csv links, genetate dataframes and combine into a unified dataframe
     for link in csv_links:
         csv_data = pd.read_csv(link,usecols = data_columns,sep = ',', engine = 'python')
         datafiles.append(csv_data)
-    combine_data = pd.concat(datafiles, axis=0, ignore_index=True) # Merge all data from each csv file into 1 main dataframe
+    combine_data = pd.concat(datafiles, axis=0, ignore_index=True) # Merge all data from each csv file into a single dataframe
     return combine_data
 
 
