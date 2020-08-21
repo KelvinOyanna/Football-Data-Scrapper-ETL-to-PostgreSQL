@@ -7,36 +7,45 @@ from sqlalchemy import create_engine
 import mysql.connector
 
 #######################################################
-###   SCRAPE DATA FROM WEBSITE                      ###
+###   EXTRACT - SCRAPE DATA FROM FOOTBALL WEBSITE   ###
 #######################################################
 
+def scrape_data():
 
-# Use the request library to scrape data from the specified link
-web_data = requests.get('https://www.football-data.co.uk/englandm.php')
+    # Use the request library to scrape data from the specified link
+    web_data = requests.get('https://www.football-data.co.uk/englandm.php')
 
-#Create a BeautifulSoup object to clean & extract our target data
-soup = BeautifulSoup(web_data.content, 'html.parser')
-links = soup.find_all('a')
-
-#Identify links containing the CSV data and save in a list
-csv_links = []
-for link in links:
-    if re.search(r'mmz\d+\/\d+\/(E0|E1|E2)\.csv', str(link)):
-        csv_link = re.search(r'mmz\d+\/\d+\/(E0|E1|E2)\.csv', str(link)).group()
-        csv_link = 'https://www.football-data.co.uk/'+ csv_link
-        csv_links.append(csv_link)
-    else:
-        continue
+    #Create a BeautifulSoup object to clean & extract our target data
+    soup = BeautifulSoup(web_data.content, 'html.parser')
+    links = soup.find_all('a')
+    
+    """
+    Identify links containing the CSV data and save in a list
+    Only football data in the CSV formats below are considered:
+    - https://www.football-data.co.uk/mmz4281/1920/E0.csv
+    - https://www.football-data.co.uk/mmz4281/1920/E2.csv
+    - https://www.football-data.co.uk/mmz4281/0203/E1.csv
+    """
+    # A list to aggregate the matched/desired csv links
+    csv_links = []
+    for link in links:
+        if re.search(r'mmz\d+\/\d+\/(E0|E1|E2)\.csv', str(link)):
+            csv_link = re.search(r'mmz\d+\/\d+\/(E0|E1|E2)\.csv', str(link)).group()
+            csv_link = 'https://www.football-data.co.uk/'+ csv_link
+            csv_links.append(csv_link)
+        else:
+            continue
+    return csv_links
 
 ##############################################################################
-###       EXTRACT REQUIRED SPORT DATA FROM SCRAPPED DATA                   ###
+###       STRUCTURE AND TRANSFORM SCRAPPED DATA TO REQUIRED FORMAT         ###
 ##############################################################################
 
 #Read data from the csv links and merge into one data file
-def extract_csv_data():
+def extract_transform_to_csv():
+    scraped_data = scrape_data() # Create an object to recieve scrapped data
     datafiles = []
     data_columns = ['Div','Date','HomeTeam','AwayTeam','FTHG','FTAG'] #This is a list of the specific columns of data required
-    # Note: There is No column for 'Time' in the required csv data -E0.csv, E1.csv,E2.csv
     for link in csv_links:
         csv_data = pd.read_csv(link,usecols = data_columns,sep = ',', engine = 'python')
         datafiles.append(csv_data)
