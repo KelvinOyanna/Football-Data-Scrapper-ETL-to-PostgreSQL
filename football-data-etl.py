@@ -42,47 +42,48 @@ def scrape_data():
 ##############################################################################
 
 #Read data from the csv links and merge into one data file
-def extract_transform_to_csv():
-    scraped_data = scrape_data() # Create an object to recieve scrapped data
+def extract_data():
+    scrapped_links = scrape_data() # Create an object to recieve scrapped data
     datafiles = []
     data_columns = ['Div','Date','HomeTeam','AwayTeam','FTHG','FTAG'] #This is a list of the specific columns of data required
     # Iterate through scrapped csv links, genetate dataframes and combine into a unified dataframe
-    for link in csv_links:
+    for link in scrapped_links:
         csv_data = pd.read_csv(link,usecols = data_columns,sep = ',', engine = 'python')
         datafiles.append(csv_data)
-    combine_data = pd.concat(datafiles, axis=0, ignore_index=True) # Merge all data from each csv file into a single dataframe
-    return combine_data
+    combined_data = pd.concat(datafiles, axis=0, ignore_index=True) # Merge all data from each csv file into a single dataframe
+    # Export extracted data to a stagging CSV file in append mode
+    combined_data.to_csv('Football_data.csv', mode = 'a', header= combined_data.tell() == 0)
 
 
 ##############################################################
-###   PERFORM TRANSFORMATION ON THE EXTRACTED DATA ABOVE   ###
+###   DATA TRANSFORMATION ON THE SCRAPPED/EXTRACTED DATA   ###
 ##############################################################
 
-# Transform the Date column from string to a Date object
-sport_data = extract_csv_data()
-sport_data['Date'] = pd.to_datetime(sport_data['Date']).dt.date
-# Expot data to a CSV file
-#sport_data.to_csv('Bet Sport Data.csv')
+def transform_data():
+    football_data = pd.read_csv('Football_data.csv')
+    football_data['Date'].to_datetime.dt.date # Transform the Date column from string to a Date object
+
+#########################################
+###   LOAD DATA TO MYSQL DATABASE     ###
+#########################################
 
 
-###########################################################################################################
-###   CREATE MYSQL DATABASE AND TABLE THEN LOAD EXTRACTED DATA INTO THE TABLE IN THE MYSQL DATABASE     ###
-###########################################################################################################
 
-#Create a Mysql connection to use a database
-connection = mysql.connector.connect(host = 'localhost', user = 'your_username', password = 'your_password', database = 'your_database_name')
-#Create a cursor object for executing sql queries
-cursor = connection.cursor()
-
-#Create a mysql database
-cursor.execute('CREATE DATABASE IF NOT EXISTS bet_sport_data')
-
-#Connect to the newly created database
-connection = mysql.connector.connect(host = 'localhost', user = 'your_username', password = 'your_password', database = 'bet_sport_data')
-cursor = connection.cursor()
 
 def load_data_to_mysql():
+    #Create a Mysql connection to use a database
+    connection = mysql.connector.connect(host = 'localhost', user = 'your_username', password = 'your_password', database = 'your_database_name')
+    #Create a cursor object for executing sql queries
+    cursor = connection.cursor()
+
+    #Create a mysql database
+    cursor.execute('CREATE DATABASE IF NOT EXISTS sport_data')
+
+    #Connect to the newly created database
+    connection = mysql.connector.connect(host = 'localhost', user = 'your_username', password = 'your_password', database = 'bet_sport_data')
+    cursor = connection.cursor()
     #Create a table named football in the database created above
+    
     create_table = """
     CREATE TABLE IF NOT EXISTS football(
     Id VARCHAR(50) DEFAULT(0),
@@ -106,30 +107,30 @@ def load_data_to_mysql():
     connection.commit()
 
 
-#Call the load data function above to perform the load data operation
-#load_data_to_mysql()
+    #Call the load data function above to perform the load data operation
+    #load_data_to_mysql()
 
-####################################################################################################
-###   PERFORM UPDATE ON THE DATABASE - SET PRIMARY KEY AND ASSIGN UUID VALUES TO THE ID COLUMN   ###
-####################################################################################################
+    ####################################################################################################
+    ###   PERFORM UPDATE ON THE DATABASE - SET PRIMARY KEY AND ASSIGN UUID VALUES TO THE ID COLUMN   ###
+    ####################################################################################################
 
-# Update the ID column with UUID values
-new_id = """
-UPDATE football
-SET Id = uuid();
-"""
-cursor.execute(new_id)
+    # Update the ID column with UUID values
+    new_id = """
+    UPDATE football
+    SET Id = uuid();
+    """
+    cursor.execute(new_id)
 
-#Set the ID column as the primary key
-set_primary_key = """
-ALTER TABLE football
-ADD PRIMARY KEY(Id);
-"""
-cursor.execute(set_primary_key)
+    #Set the ID column as the primary key
+    set_primary_key = """
+    ALTER TABLE football
+    ADD PRIMARY KEY(Id);
+    """
+    cursor.execute(set_primary_key)
 
-# Commit all changes to the database
-connection.commit()
-# Close connection and Cursor
-cursor.close()
-connection.close()
+    # Commit all changes to the database
+    connection.commit()
+    # Close connection and Cursor
+    cursor.close()
+    connection.close()
 
