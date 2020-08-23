@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from sqlalchemy import create_engine
+from sqlalchemy import text
 import mysql.connector
 
 #######################################################
@@ -61,76 +62,39 @@ def extract_data():
 
 def transform_data():
     football_data = pd.read_csv('Football_data.csv')
-    football_data['Date'].to_datetime.dt.date # Transform the Date column from string to a Date object
+    football_data = football_data['Date'].to_datetime.dt.date # Transform the Date column from string to a Date object
+    return football_data
+
+
 
 #########################################
 ###   LOAD DATA TO MYSQL DATABASE     ###
 #########################################
 
 
-
-
-def load_data_to_mysql():
-    #Create a Mysql connection to use a database
-    connection = mysql.connector.connect(host = 'localhost', user = 'your_username', password = 'your_password', database = 'your_database_name')
-    #Create a cursor object for executing sql queries
-    cursor = connection.cursor()
-
-    #Create a mysql database
-    cursor.execute('CREATE DATABASE IF NOT EXISTS sport_data')
-
-    #Connect to the newly created database
-    connection = mysql.connector.connect(host = 'localhost', user = 'your_username', password = 'your_password', database = 'bet_sport_data')
-    cursor = connection.cursor()
-    #Create a table named football in the database created above
+def load_data_to_db():
+    #Create a sqlAlchemy connection. This library allows for easy loading of data to our database using the load_sql method from pandas library
+    connection_engine = create_engine("mysql+pymysql://{user}:{pw}@localhost/{db}".format(user = 'admin', \
+    pw = 'root@1987', db = 'sport_data'))
     
+    # Create a table for holding the extracted data
     create_table = """
-    CREATE TABLE IF NOT EXISTS football(
-    Id VARCHAR(50) DEFAULT(0),
+    CREATE TABLE IF NOT EXISTS football_data(
+    Id SERIAL PRIMARY KEY,
     `Div` VARCHAR(5),
     Date DATE,
-    HomeTeam VARCHAR(155),
-    AwayTeam VARCHAR(155),
+    HomeTeam VARCHAR(50),
+    AwayTeam VARCHAR(50),
     FTHG INT DEFAULT(0),
     FTAG INT DEFAULT(0));
     """
-    #Execute the above sql query
-    cursor.execute(create_table)
-    #Commit changes made to the database
-    connection.commit()
 
-    #Create a sqlAlchemy connection. This library allows for easy loading of data to our database using the load_sql method from pandas library
-    connection_engine = create_engine("mysql://{user}:{pw}@localhost/{db}".format(user = 'your_username', pw = 'your_password', db = 'bet_sport_data'))
-
+    with connection_engine.connect() as connection:
+        connection.execute(text(create_table))
+        
+    football_data = transform_data()
     #load the extracted csv data into the bet_sport_data database in mysql
-    sport_data.to_sql('football', con = connection_engine, if_exists = 'append', index= False)
-    connection.commit()
+    football_data.to_sql('football_data', con = connection_engine, if_exists = 'append', index= False)
+    
 
-
-    #Call the load data function above to perform the load data operation
-    #load_data_to_mysql()
-
-    ####################################################################################################
-    ###   PERFORM UPDATE ON THE DATABASE - SET PRIMARY KEY AND ASSIGN UUID VALUES TO THE ID COLUMN   ###
-    ####################################################################################################
-
-    # Update the ID column with UUID values
-    new_id = """
-    UPDATE football
-    SET Id = uuid();
-    """
-    cursor.execute(new_id)
-
-    #Set the ID column as the primary key
-    set_primary_key = """
-    ALTER TABLE football
-    ADD PRIMARY KEY(Id);
-    """
-    cursor.execute(set_primary_key)
-
-    # Commit all changes to the database
-    connection.commit()
-    # Close connection and Cursor
-    cursor.close()
-    connection.close()
-
+load_data_to_db()
