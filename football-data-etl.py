@@ -6,6 +6,7 @@ import re
 from sqlalchemy import create_engine
 from sqlalchemy import text
 import mysql.connector
+import os
 
 #######################################################
 ###   EXTRACT - SCRAPE DATA FROM FOOTBALL WEBSITE   ###
@@ -52,8 +53,9 @@ def extract_data():
         csv_data = pd.read_csv(link,usecols = data_columns,sep = ',', engine = 'python')
         datafiles.append(csv_data)
     combined_data = pd.concat(datafiles, axis=0, ignore_index=True) # Merge all data from each csv file into a single dataframe
-    # Export extracted data to a stagging CSV file in append mode
-    combined_data.to_csv('Football_data.csv', mode = 'a', header= combined_data.tell() == 0)
+    # Write data to a csv file
+    combined_data.to_csv('football_data.csv', header = data_columns, index = False)
+    
 
 
 ##############################################################
@@ -61,9 +63,10 @@ def extract_data():
 ##############################################################
 
 def transform_data():
-    football_data = pd.read_csv('Football_data.csv')
-    football_data = football_data['Date'].to_datetime.dt.date # Transform the Date column from string to a Date object
-    return football_data
+    football_data = pd.read_csv('football_data.csv')
+    #football_data['Date'] = pd.to_datetime(football_data['Date'], format = '%Y-%m-%d') # Transform the Date...
+    #column from string to a Date object
+    print(football_data.head())
 
 
 
@@ -85,7 +88,7 @@ def load_data_to_db():
     Date DATE,
     HomeTeam VARCHAR(50),
     AwayTeam VARCHAR(50),
-    FTHG INT DEFAULT(0),
+    FTHG INT DEFAULT(0),s
     FTAG INT DEFAULT(0));
     """
 
@@ -97,4 +100,8 @@ def load_data_to_db():
     football_data.to_sql('football_data', con = connection_engine, if_exists = 'append', index= False)
     
 
-load_data_to_db()
+#extract_data()
+transform_data()
+#load_data_to_db()
+
+
