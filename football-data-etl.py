@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 import mysql.connector
 import os
+from datetime import datetime
 
 #######################################################
 ###   EXTRACT - SCRAPE DATA FROM FOOTBALL WEBSITE   ###
@@ -64,11 +65,16 @@ def extract_data():
 
 def transform_data():
     football_data = pd.read_csv('football_data.csv')
-    #football_data['Date'] = pd.to_datetime(football_data['Date'], format = '%Y-%m-%d') # Transform the Date...
-    #column from string to a Date object
-    print(football_data.head())
+    #football_data['Date'] = pd.to_datetime(football_data['Date'], format = '%d/%m/%y') # Transform the Date...
+    def convert_date(date):
+        for value in date:
+            if re.search(r'\d+\/\d+\/\d\d\d\d', value):
+                new_date = datetime.date.strptime(value, '%d/%m/%y')
+                return new_date
+            else:
+                pass
 
-
+    -------------------------------------------------------
 
 #########################################
 ###   LOAD DATA TO MYSQL DATABASE     ###
