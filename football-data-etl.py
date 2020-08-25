@@ -74,7 +74,9 @@ def transform_data():
             else:
                 pass
 
-    -------------------------------------------------------
+    football_data['Date'] = football_data['Date'].apply(lambda date : convert_date(str(date)))
+    #column from string to a Date object
+    print(football_data.head(20))
 
 #########################################
 ###   LOAD DATA TO MYSQL DATABASE     ###
