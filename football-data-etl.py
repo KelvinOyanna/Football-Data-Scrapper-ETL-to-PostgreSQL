@@ -65,18 +65,21 @@ def extract_data():
 
 def transform_data():
     football_data = pd.read_csv('football_data.csv')
-    #football_data['Date'] = pd.to_datetime(football_data['Date'], format = '%d/%m/%y') # Transform the Date...
-    def convert_date(date):
-        for value in date:
-            if re.search(r'\d+\/\d+\/\d\d\d\d', value):
-                new_date = datetime.date.strptime(value, '%d/%m/%y')
-                return new_date
-            else:
-                pass
-
-    football_data['Date'] = football_data['Date'].apply(lambda date : convert_date(str(date)))
-    #column from string to a Date object
-    print(football_data.head(20))
+    # Define a function to convert the date column to a uniform date format
+    def convert_date(value):
+        #for value in date:
+        if re.search(r'\d+\/\d+\/\d\d\d\d', str(value)):
+            new_date = datetime.strptime(str(value), '%d/%m/%Y').date()
+            return new_date
+        elif re.search(r'\d+\/\d+\/\d\d', str(value)):
+            new_date = datetime.strptime(str(value), '%d/%m/%y').date()
+            return new_date
+        else:
+            pass
+    
+    
+    football_data['Date'] = football_data['Date'].apply(convert_date)
+    return football_data
 
 #########################################
 ###   LOAD DATA TO MYSQL DATABASE     ###
@@ -96,13 +99,12 @@ def load_data_to_db():
     Date DATE,
     HomeTeam VARCHAR(50),
     AwayTeam VARCHAR(50),
-    FTHG INT DEFAULT(0),s
+    FTHG INT DEFAULT(0),
     FTAG INT DEFAULT(0));
     """
 
     with connection_engine.connect() as connection:
-        connection.execute(text(create_table))
-        
+        connection.execute(text(create_table)) 
     football_data = transform_data()
     #load the extracted csv data into the bet_sport_data database in mysql
     football_data.to_sql('football_data', con = connection_engine, if_exists = 'append', index= False)
@@ -110,6 +112,6 @@ def load_data_to_db():
 
 #extract_data()
 transform_data()
-#load_data_to_db()
+load_data_to_db()
 
 
