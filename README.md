@@ -1,5 +1,5 @@
 ## A Web Scrapper with ETL pipeline to a PostgreSQL Database
-In this project, I build a web scrapper to scrappe data from: football-data.co.uk website and performed Extraction Transformation &amp; loading (ETL) on the screapped data to a PostgreSQL database
+In this project, I built a web scrapper to scrappe data from: football-data.co.uk website and performed Extraction Transformation &amp; loading (ETL) on the screapped data to a PostgreSQL database
 
 Instruction on how to run code:
 1.	Install a PostgreSQL engine (If you don't have one installed). Then create a database.
